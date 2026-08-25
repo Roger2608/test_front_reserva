@@ -1,0 +1,18 @@
+import Link from "next/link";
+import { ArrowRight, CalendarCheck, Clock3, MessageCircle, ShieldCheck } from "lucide-react";
+
+export default function Home() {
+  const features = [
+    { Icon: Clock3, title: "Disponibilidad real", text: "Slots calculados con horarios y reservas existentes." },
+    { Icon: MessageCircle, title: "Lista para WhatsApp", text: "Una base sólida para confirmaciones y recordatorios." },
+    { Icon: ShieldCheck, title: "Aislada por empresa", text: "Cada tenant administra únicamente su información." }
+  ];
+  return <main className="min-h-screen overflow-hidden bg-[#f7f5ef]">
+    <header className="shell flex h-20 items-center justify-between"><Link href="/" className="text-xl font-extrabold tracking-tight text-teal-950">turno<span className="text-teal-600">.</span></Link><nav className="flex items-center gap-3 text-sm font-semibold"><Link href="/anuncios" className="hidden rounded-full px-4 py-2 hover:bg-white sm:inline-flex">Descubrir negocios</Link><Link href="/login" className="rounded-full px-4 py-2 hover:bg-white">Ingresar</Link><Link href="/registro" className="rounded-full bg-teal-800 px-4 py-2 text-white">Crear cuenta</Link></nav></header>
+    <section className="grid-paper relative border-y border-teal-900/10 py-20 md:py-28"><div className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-amber-300/30 blur-3xl" /><div className="shell relative grid items-center gap-12 lg:grid-cols-[1.15fr_.85fr]">
+      <div><span className="inline-flex rounded-full border border-teal-800/15 bg-white/80 px-4 py-2 text-xs font-bold uppercase tracking-[.18em] text-teal-800">Reservas sin fricción</span><h1 className="text-balance mt-7 text-5xl font-semibold leading-[1.02] text-teal-950 md:text-7xl">Tu tiempo merece una agenda que fluya.</h1><p className="mt-6 max-w-xl text-lg leading-8 text-slate-600">Organiza sedes, servicios y equipos. Comparte tu enlace y tus clientes reservan sin crear una cuenta.</p><div className="mt-9 flex flex-wrap gap-3"><Link href="/registro" className="inline-flex min-h-12 items-center gap-2 rounded-xl bg-teal-800 px-6 font-bold text-white shadow-lg shadow-teal-900/15 hover:bg-teal-900">Crear mi página <ArrowRight size={18} /></Link></div></div>
+      <div className="relative mx-auto w-full max-w-md"><div className="rotate-2 rounded-[2rem] bg-teal-950 p-3 shadow-2xl shadow-teal-950/25"><div className="rounded-[1.45rem] bg-white p-6"><div className="flex items-center justify-between"><div><p className="text-xs font-bold uppercase tracking-wider text-teal-700">Hoy</p><p className="mt-1 text-2xl font-bold text-slate-900">12 reservas</p></div><CalendarCheck className="text-teal-700" size={32} /></div><div className="mt-6 space-y-3">{[["09:30", "Corte clásico", "Ana P."], ["11:00", "Consulta inicial", "Luis R."], ["15:30", "Sesión privada", "María C."]].map(([time, service, name], i) => <div key={time} className="flex items-center gap-4 rounded-xl bg-slate-50 p-3"><span className={`h-10 w-1 rounded-full ${i === 1 ? "bg-amber-400" : "bg-teal-500"}`} /><div className="min-w-0 flex-1"><p className="font-bold text-slate-900">{time} · {service}</p><p className="text-sm text-slate-500">{name}</p></div></div>)}</div></div></div></div>
+    </div></section>
+    <section className="shell grid gap-5 py-16 md:grid-cols-3">{features.map(({ Icon, title, text }) => <article key={title} className="rounded-2xl border border-slate-200 bg-white p-6"><Icon className="text-teal-700" /><h2 className="mt-5 text-2xl font-semibold text-teal-950">{title}</h2><p className="mt-2 leading-7 text-slate-600">{text}</p></article>)}</section>
+  </main>;
+}

@@ -1,0 +1,13 @@
+@import "tailwindcss";
+
+:root { --ink:#102a2a; --paper:#f7f5ef; --mint:#dff4ed; }
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin:0; background:var(--paper); color:#17202a; font-family:"Avenir Next","Segoe UI",system-ui,sans-serif; }
+h1,h2,h3,.display { font-family:Iowan Old Style,"Palatino Linotype",Georgia,serif; }
+button,a { -webkit-tap-highlight-color:transparent; }
+::selection { background:#99e2d0; color:#073b36; }
+.shell { width:min(1180px,calc(100% - 2rem)); margin-inline:auto; }
+.grid-paper { background-image:linear-gradient(rgba(15,118,110,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(15,118,110,.06) 1px,transparent 1px); background-size:32px 32px; }
+.text-balance { text-wrap:balance; }
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}}
