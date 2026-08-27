@@ -3,7 +3,9 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=24" },
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build --webpack",
@@ -16,6 +18,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "latest",
+    "@mercadopago/sdk-js": "latest",
     "@tanstack/react-query": "latest",
     "clsx": "latest",
     "date-fns": "latest",

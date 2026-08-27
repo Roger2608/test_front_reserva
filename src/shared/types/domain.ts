@@ -11,17 +11,18 @@ export type Booking = Entity & {
 };
 export type ProblemDetails = { type?: string; title: string; status: number; detail: string; timestamp?: string; correlationId?: string };
 export type Plan = "FREE" | "BASIC" | "PLUS" | "PREMIUM";
-export type Role = "PLATFORM_ADMIN"|"TENANT_OWNER"|"TENANT_ADMIN"|"TENANT_STAFF"|"PENDING_COMPANY";
-export type Checkout = { id:string;status:"PENDING"|"PAID"|"FAILED";plan:Plan;amount:number;currency:string;checkoutUrl?:string };
-export type PlanPrice = { plan:Plan;amount:number;currency:string };
-export type Session = { accessToken?: string; expiresIn?: number; userId: string; fullName: string; email: string; tenant: Tenant|null; role: Role; plan: Plan; canCustomizeDesign: boolean; checkout?:Checkout };
-export type Branding = Entity & { tenantId:string;primaryColor:string;accentColor:string;fontPreset:"CLASSIC"|"MODERN"|"FRIENDLY";themePreset:"EDITORIAL"|"MINIMAL"|"BOLD";heroTitle?:string;heroDescription?:string;logoUrl?:string;coverUrl?:string;buttonStyle:"ROUNDED"|"PILL"|"SQUARE" };
-export type PlanCapabilities = { showCustomerAds:boolean;showAdminAds:boolean;canCustomizeDesign:boolean;canAutomateWhatsapp:boolean;hasWhatsappReminder:boolean;canAdvertise:boolean };
-export type Subscription = { plan:Plan;status:string;canCustomizeDesign:boolean;premiumDesign:boolean;currentPeriodStart?:string;currentPeriodEnd?:string;pendingCheckout?:Checkout;capabilities:PlanCapabilities };
-export type PublicSite = { tenant:Tenant;plan:Plan;customized:boolean;branding:Omit<Branding,"id"|"tenantId"|"createdAt"|"updatedAt"|"version">;capabilities:PlanCapabilities };
-export type Advertisement = { id:string;advertiserName:string;title:string;description:string;ctaLabel:string;destinationUrl:string;imageUrl?:string;adminDisplaySeconds:number;active:boolean };
-export type NotificationJob = Entity & { tenantId:string;bookingId:string;type:"BOOKING_CONFIRMATION"|"BOOKING_REMINDER";scheduledAt:string;status:"PENDING"|"SENT"|"FAILED";attempts:number;providerReference?:string;lastError?:string;sentAt?:string };
-export type AvailabilityRule = Entity & { tenantId:string;resourceId:string;dayOfWeek:number;startTime:string;endTime:string;active:boolean };
+export type Role = "PLATFORM_ADMIN" | "TENANT_OWNER" | "TENANT_ADMIN" | "TENANT_STAFF" | "PENDING_COMPANY";
+export type Checkout = { id: string; status: "PENDING" | "PAID" | "FAILED"; plan: Plan; amount: number; currency: string; checkoutUrl?: string };
+export type DirectPaymentResult = { paymentId: string; status: string; statusDetail: string; checkout: Checkout };
+export type PlanPrice = { plan: Plan; amount: number; currency: string };
+export type Session = { accessToken?: string; expiresIn?: number; userId: string; fullName: string; email: string; tenant: Tenant | null; role: Role; plan: Plan; canCustomizeDesign: boolean; checkout?: Checkout };
+export type Branding = Entity & { tenantId: string; primaryColor: string; accentColor: string; fontPreset: "CLASSIC" | "MODERN" | "FRIENDLY"; themePreset: "EDITORIAL" | "MINIMAL" | "BOLD"; heroTitle?: string; heroDescription?: string; logoUrl?: string; coverUrl?: string; buttonStyle: "ROUNDED" | "PILL" | "SQUARE" };
+export type PlanCapabilities = { showCustomerAds: boolean; showAdminAds: boolean; canCustomizeDesign: boolean; canAutomateWhatsapp: boolean; hasWhatsappReminder: boolean; canAdvertise: boolean };
+export type Subscription = { plan: Plan; status: string; canCustomizeDesign: boolean; premiumDesign: boolean; currentPeriodStart?: string; currentPeriodEnd?: string; pendingCheckout?: Checkout; capabilities: PlanCapabilities };
+export type PublicSite = { tenant: Tenant; plan: Plan; customized: boolean; branding: Omit<Branding, "id" | "tenantId" | "createdAt" | "updatedAt" | "version">; capabilities: PlanCapabilities };
+export type Advertisement = { id: string; advertiserName: string; title: string; description: string; ctaLabel: string; destinationUrl: string; imageUrl?: string; adminDisplaySeconds: number; active: boolean };
+export type NotificationJob = Entity & { tenantId: string; bookingId: string; type: "BOOKING_CONFIRMATION" | "BOOKING_REMINDER"; scheduledAt: string; status: "PENDING" | "SENT" | "FAILED"; attempts: number; providerReference?: string; lastError?: string; sentAt?: string };
+export type AvailabilityRule = Entity & { tenantId: string; resourceId: string; dayOfWeek: number; startTime: string; endTime: string; active: boolean };
 
 export type CreateBooking = {
   locationId: string; serviceId: string; resourceId: string; startAt: string; notes?: string;

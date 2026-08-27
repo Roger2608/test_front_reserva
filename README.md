@@ -18,7 +18,7 @@ Abre `http://localhost:3000`. Una empresa se registra en `/registro`, ingresa en
 ## Recorrido funcional
 
 1. Registra una empresa y elige un plan.
-2. Si es pago, completa Checkout Pro; en local se usa un simulador sin cargos.
+2. Si es pago, completa Checkout API con tarjeta o Yape; en local se usa un simulador sin cargos.
 3. Configura sedes, servicios, recursos y horarios desde el menú del panel.
 4. Personaliza la página en **Diseño** si el plan es PLUS o PREMIUM.
 5. Copia el enlace mostrado en el resumen y envíalo al cliente.
