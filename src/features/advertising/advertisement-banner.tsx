@@ -30,7 +30,7 @@ export function AdvertisementBanner({
             style={{ backgroundImage: `url(${advertisement.logoUrl})` }}
           />
         )}
-        <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[.18em] text-amber-700">
+        <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-[.18em] text-teal-700">
           <Megaphone size={13} />
           Publicidad · {advertisement.advertiserName}
         </p>
@@ -67,7 +67,7 @@ export function AdvertisementBanner({
   return (
     <aside
       aria-label={`Publicidad de ${advertisement.advertiserName}`}
-      className={`relative overflow-hidden rounded-2xl border border-amber-200 bg-gradient-to-r from-amber-50 via-white to-teal-50 shadow-sm ${layout === "HERO" ? "min-h-64" : layout === "SPLIT" ? "" : ""}`}
+      className={`relative overflow-hidden rounded-2xl border border-teal-200 bg-gradient-to-r from-teal-50 via-white to-teal-50 shadow-sm ${layout === "HERO" ? "min-h-64" : layout === "SPLIT" ? "" : ""}`}
     >
       {layout === "HERO" ? (
         <>

@@ -1,6 +1,73 @@
 "use client";
 import Link from "next/link";
-import {Building2,ExternalLink,ShieldCheck} from "lucide-react";
-import {useTenant} from "@/shared/components/providers";
-import {Badge,Card,Empty} from "@/shared/components/ui";
-export function TenantManager(){const {session}=useTenant();if(!session?.tenant)return <Empty title="Inicia sesión" description="Tu empresa aparecerá aquí."/>;const tenant=session.tenant;return <div className="grid gap-6 lg:grid-cols-[1fr_360px]"><Card><div className="flex items-center gap-3"><span className="grid h-12 w-12 place-items-center rounded-xl bg-teal-50 text-teal-700"><Building2/></span><div><h2 className="text-2xl font-semibold">{tenant.name}</h2><p className="text-sm text-slate-500">/{tenant.slug}</p></div></div><dl className="mt-7 grid gap-4 sm:grid-cols-2"><div><dt className="text-xs font-bold uppercase tracking-wider text-slate-400">Zona horaria</dt><dd className="mt-1 font-semibold">{tenant.timezone}</dd></div><div><dt className="text-xs font-bold uppercase tracking-wider text-slate-400">Moneda</dt><dd className="mt-1 font-semibold">{tenant.currency}</dd></div><div><dt className="text-xs font-bold uppercase tracking-wider text-slate-400">Tu rol</dt><dd className="mt-1"><Badge tone="green">{session.role}</Badge></dd></div><div><dt className="text-xs font-bold uppercase tracking-wider text-slate-400">Estado</dt><dd className="mt-1"><Badge tone="green">ACTIVA</Badge></dd></div></dl></Card><Card><ShieldCheck className="text-teal-700"/><h2 className="mt-4 text-xl font-semibold">Página de clientes</h2><p className="mt-2 text-sm leading-6 text-slate-500">Este es el enlace que debes enviar para que reserven sin iniciar sesión.</p><Link href={`/${tenant.slug}`} target="_blank" className="mt-5 inline-flex items-center gap-2 rounded-xl bg-teal-800 px-4 py-3 text-sm font-bold text-white">Abrir página <ExternalLink size={17}/></Link></Card></div>}
+import { Building2, ExternalLink, ShieldCheck } from "lucide-react";
+import { useTenant } from "@/shared/components/providers";
+import { Badge, Card, Empty } from "@/shared/components/ui";
+export function TenantManager() {
+  const { session } = useTenant();
+  if (!session?.tenant)
+    return (
+      <Empty title="Inicia sesión" description="Tu empresa aparecerá aquí." />
+    );
+  const tenant = session.tenant;
+  return (
+    <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+      <Card>
+        <div className="flex items-center gap-3">
+          <span className="grid h-12 w-12 place-items-center rounded-xl bg-teal-50 text-teal-700">
+            <Building2 />
+          </span>
+          <div>
+            <h2 className="text-2xl font-semibold">{tenant.name}</h2>
+            <p className="text-sm text-slate-500">/{tenant.slug}</p>
+          </div>
+        </div>
+        <dl className="mt-7 grid gap-4 sm:grid-cols-2">
+          <div>
+            <dt className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              Zona horaria
+            </dt>
+            <dd className="mt-1 font-semibold">{tenant.timezone}</dd>
+          </div>
+          <div>
+            <dt className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              Moneda
+            </dt>
+            <dd className="mt-1 font-semibold">{tenant.currency}</dd>
+          </div>
+          <div>
+            <dt className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              Tu rol
+            </dt>
+            <dd className="mt-1">
+              <Badge tone="green">{session.role}</Badge>
+            </dd>
+          </div>
+          <div>
+            <dt className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              Estado
+            </dt>
+            <dd className="mt-1">
+              <Badge tone="green">ACTIVA</Badge>
+            </dd>
+          </div>
+        </dl>
+      </Card>
+      <Card>
+        <ShieldCheck className="text-teal-700" />
+        <h2 className="mt-4 text-xl font-semibold">Página de clientes</h2>
+        <p className="mt-2 text-sm leading-6 text-slate-500">
+          Este es el enlace que debes enviar para que reserven sin iniciar
+          sesión.
+        </p>
+        <Link
+          href={`/${tenant.slug}`}
+          target="_blank"
+          className="mt-5 inline-flex items-center gap-2 rounded-xl bg-teal-800 px-4 py-3 text-sm font-bold text-white"
+        >
+          Abrir página <ExternalLink size={17} />
+        </Link>
+      </Card>
+    </div>
+  );
+}

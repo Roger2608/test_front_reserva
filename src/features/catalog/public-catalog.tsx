@@ -22,7 +22,7 @@ export function PublicCatalog({ slug }: { slug: string }) {
   });
   if (site.isError)
     return (
-      <main className="grid min-h-screen place-items-center bg-[#f7f5ef] p-5">
+      <main className="grid min-h-screen place-items-center bg-[#f4f7f6] p-5">
         <Empty
           title="Empresa no encontrada"
           description="Revisa que el enlace sea correcto o solicita uno nuevo."
@@ -45,11 +45,11 @@ export function PublicCatalog({ slug }: { slug: string }) {
         : "Georgia,serif";
   return (
     <main
-      className="brand-typography min-h-screen bg-[#f7f5ef]"
+      className="brand-typography min-h-screen bg-[#f4f7f6]"
       style={
         {
-          "--brand": branding?.primaryColor ?? "#115e59",
-          "--accent": branding?.accentColor ?? "#f59e0b",
+          "--brand": branding?.primaryColor ?? "#134e4a",
+          "--accent": branding?.accentColor ?? "#14b8a6",
           "--brand-font": font,
         } as React.CSSProperties
       }

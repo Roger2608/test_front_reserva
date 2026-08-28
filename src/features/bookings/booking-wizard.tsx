@@ -104,8 +104,17 @@ export function BookingWizard({ slug }: { slug: string }) {
     onError: (error: Error) => toast.error(error.message),
   });
   const validateCoupon = useMutation({
-    mutationFn: () => api<CouponValidation>(`/public/v1/${slug}/coupons/validate`, { method: "POST", body: JSON.stringify({ code: data.couponCode, serviceId: data.serviceId, phone: data.phone }) }),
-    onSuccess: (result) => toast.success(`Cupón aplicado: ${result.discountPercent}% de descuento`),
+    mutationFn: () =>
+      api<CouponValidation>(`/public/v1/${slug}/coupons/validate`, {
+        method: "POST",
+        body: JSON.stringify({
+          code: data.couponCode,
+          serviceId: data.serviceId,
+          phone: data.phone,
+        }),
+      }),
+    onSuccess: (result) =>
+      toast.success(`Cupón aplicado: ${result.discountPercent}% de descuento`),
     onError: (error: Error) => toast.error(error.message),
   });
   const valid =
@@ -116,7 +125,7 @@ export function BookingWizard({ slug }: { slug: string }) {
         : data.name && data.phone;
   const whatsapp = site.data?.capabilities.canAutomateWhatsapp;
   return (
-    <main className="min-h-screen bg-[#f7f5ef] py-8">
+    <main className="min-h-screen bg-[#f4f7f6] py-8">
       <div className="mx-auto w-[min(760px,calc(100%-2rem))]">
         <button
           onClick={() =>
@@ -198,7 +207,60 @@ export function BookingWizard({ slug }: { slug: string }) {
           )}
           {step === 2 && (
             <div className="grid gap-5">
-              <div><p className="mb-3 text-sm font-medium text-slate-700">Elige un profesional <span className="font-normal text-slate-400">(opcional)</span></p><div className="grid gap-3 sm:grid-cols-3"><button type="button" onClick={()=>setData({...data,resourceId:"",startAt:""})} className={`rounded-2xl border p-3 text-left ${!data.resourceId?"border-teal-600 bg-teal-50":"border-slate-200"}`}><span className="grid h-14 w-14 place-items-center rounded-full bg-teal-100 text-xl font-bold text-teal-800">✓</span><strong className="mt-2 block">Cualquiera</strong><small className="text-slate-500">Primero disponible</small></button>{filtered.filter(x=>x.type==="STAFF").map(resource=><button type="button" key={resource.id} onClick={()=>setData({...data,resourceId:resource.id,startAt:""})} className={`rounded-2xl border p-3 text-left ${data.resourceId===resource.id?"border-teal-600 bg-teal-50":"border-slate-200"}`}>{resource.imageUrl?<span className="block h-14 w-14 rounded-full bg-cover bg-center" style={{backgroundImage:`url(${resource.imageUrl})`}}/>:<span className="grid h-14 w-14 place-items-center rounded-full bg-slate-100 text-xl font-bold">{resource.name.charAt(0)}</span>}<strong className="mt-2 block">{resource.name}</strong><small className="line-clamp-2 text-slate-500">{resource.bio||"Profesional disponible"}</small></button>)}</div></div>
+              <div>
+                <p className="mb-3 text-sm font-medium text-slate-700">
+                  Elige un profesional{" "}
+                  <span className="font-normal text-slate-400">(opcional)</span>
+                </p>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setData({ ...data, resourceId: "", startAt: "" })
+                    }
+                    className={`rounded-2xl border p-3 text-left ${!data.resourceId ? "border-teal-600 bg-teal-50" : "border-slate-200"}`}
+                  >
+                    <span className="grid h-14 w-14 place-items-center rounded-full bg-teal-100 text-xl font-bold text-teal-800">
+                      ✓
+                    </span>
+                    <strong className="mt-2 block">Cualquiera</strong>
+                    <small className="text-slate-500">Primero disponible</small>
+                  </button>
+                  {filtered
+                    .filter((x) => x.type === "STAFF")
+                    .map((resource) => (
+                      <button
+                        type="button"
+                        key={resource.id}
+                        onClick={() =>
+                          setData({
+                            ...data,
+                            resourceId: resource.id,
+                            startAt: "",
+                          })
+                        }
+                        className={`rounded-2xl border p-3 text-left ${data.resourceId === resource.id ? "border-teal-600 bg-teal-50" : "border-slate-200"}`}
+                      >
+                        {resource.imageUrl ? (
+                          <span
+                            className="block h-14 w-14 rounded-full bg-cover bg-center"
+                            style={{
+                              backgroundImage: `url(${resource.imageUrl})`,
+                            }}
+                          />
+                        ) : (
+                          <span className="grid h-14 w-14 place-items-center rounded-full bg-slate-100 text-xl font-bold">
+                            {resource.name.charAt(0)}
+                          </span>
+                        )}
+                        <strong className="mt-2 block">{resource.name}</strong>
+                        <small className="line-clamp-2 text-slate-500">
+                          {resource.bio || "Profesional disponible"}
+                        </small>
+                      </button>
+                    ))}
+                </div>
+              </div>
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="Fecha">
                   <Input
@@ -238,7 +300,7 @@ export function BookingWizard({ slug }: { slug: string }) {
                   ))}
                 </div>
                 {slots.data?.length === 0 && (
-                  <p className="rounded-xl bg-amber-50 p-4 text-sm text-amber-800">
+                  <p className="rounded-xl bg-teal-50 p-4 text-sm text-teal-800">
                     No hay horarios para esta selección.
                   </p>
                 )}
@@ -275,7 +337,40 @@ export function BookingWizard({ slug }: { slug: string }) {
                   />
                 </Field>
               </div>
-              <div className="rounded-xl border border-dashed border-teal-300 bg-teal-50/60 p-4"><Field label="Cupón de descuento (opcional)"><div className="flex gap-2"><Input value={data.couponCode} onChange={(event)=>{setData({...data,couponCode:event.target.value.toUpperCase()});validateCoupon.reset()}} placeholder="GRACIAS10"/><Button type="button" disabled={!data.couponCode||!data.phone||validateCoupon.isPending} onClick={()=>validateCoupon.mutate()}>{validateCoupon.isPending?"Validando…":"Aplicar"}</Button></div></Field>{validateCoupon.data&&<p className="mt-2 text-sm font-semibold text-emerald-700">Ahorras {validateCoupon.data.discountAmount}. Total: {validateCoupon.data.total}</p>}</div>
+              <div className="rounded-xl border border-dashed border-teal-300 bg-teal-50/60 p-4">
+                <Field label="Cupón de descuento (opcional)">
+                  <div className="flex gap-2">
+                    <Input
+                      value={data.couponCode}
+                      onChange={(event) => {
+                        setData({
+                          ...data,
+                          couponCode: event.target.value.toUpperCase(),
+                        });
+                        validateCoupon.reset();
+                      }}
+                      placeholder="GRACIAS10"
+                    />
+                    <Button
+                      type="button"
+                      disabled={
+                        !data.couponCode ||
+                        !data.phone ||
+                        validateCoupon.isPending
+                      }
+                      onClick={() => validateCoupon.mutate()}
+                    >
+                      {validateCoupon.isPending ? "Validando…" : "Aplicar"}
+                    </Button>
+                  </div>
+                </Field>
+                {validateCoupon.data && (
+                  <p className="mt-2 text-sm font-semibold text-emerald-700">
+                    Ahorras {validateCoupon.data.discountAmount}. Total:{" "}
+                    {validateCoupon.data.total}
+                  </p>
+                )}
+              </div>
               {whatsapp && (
                 <label className="flex items-start gap-3 rounded-xl bg-teal-50 p-4 text-sm text-teal-950">
                   <input

@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -7,6 +7,7 @@ import {
   CalendarDays,
   CircleDollarSign,
   LogOut,
+  MessageSquareText,
   TrendingUp,
   Users,
 } from "lucide-react";
@@ -41,10 +42,25 @@ type Tenant = {
   paidToPlatform: number;
   createdAt: string;
 };
+type SupportTicket = {
+  id: string;
+  tenantName: string;
+  ownerEmail?: string;
+  category: string;
+  subject: string;
+  description: string;
+  priority: "NORMAL" | "HIGH" | "URGENT";
+  status: "OPEN" | "IN_PROGRESS" | "RESOLVED";
+  adminResponse?: string;
+  createdAt: string;
+};
 export function PlatformDashboard() {
   const { session, ready, logout } = useTenant();
   const router = useRouter();
   const qc = useQueryClient();
+  const [selectedTicket, setSelectedTicket] = useState<SupportTicket>();
+  const [supportResponse, setSupportResponse] = useState("");
+  const [resolved, setResolved] = useState(false);
   useEffect(() => {
     if (ready && session?.role !== "PLATFORM_ADMIN")
       router.replace(session ? "/admin" : "/login");
@@ -58,6 +74,11 @@ export function PlatformDashboard() {
   const tenants = useQuery({
     queryKey: ["platform-tenants"],
     queryFn: () => api<Tenant[]>("/api/v1/platform/tenants"),
+    enabled,
+  });
+  const support = useQuery({
+    queryKey: ["platform-support"],
+    queryFn: () => api<SupportTicket[]>("/api/v1/platform/support"),
     enabled,
   });
   const change = useMutation({
@@ -77,6 +98,24 @@ export function PlatformDashboard() {
       toast.success("Estado de la empresa actualizado");
     },
     onError: (e: Error) => toast.error(e.message),
+  });
+  const respond = useMutation({
+    mutationFn: () =>
+      api<SupportTicket>(
+        `/api/v1/platform/support/${selectedTicket?.id}/response`,
+        {
+          method: "PUT",
+          body: JSON.stringify({ response: supportResponse, resolved }),
+        },
+      ),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["platform-support"] });
+      setSelectedTicket(undefined);
+      setSupportResponse("");
+      setResolved(false);
+      toast.success("Respuesta enviada a la empresa");
+    },
+    onError: (error: Error) => toast.error(error.message),
   });
   if (!enabled)
     return (
@@ -156,6 +195,97 @@ export function PlatformDashboard() {
               </div>
             ))}
           </div>
+        </Card>
+        <Card className="mt-7 overflow-hidden p-0">
+          <div className="flex flex-wrap items-center justify-between gap-3 p-5">
+            <div>
+              <h2 className="flex items-center gap-2 text-2xl font-semibold">
+                <MessageSquareText className="text-teal-700" /> Cola de soporte
+              </h2>
+              <p className="text-sm text-slate-500">
+                Premium tiene prioridad urgente, Plus alta y Basic normal.
+              </p>
+            </div>
+            <Badge tone="slate">
+              {support.data?.filter((ticket) => ticket.status !== "RESOLVED")
+                .length ?? 0}{" "}
+              pendientes
+            </Badge>
+          </div>
+          {support.data?.length ? (
+            <div className="divide-y">
+              {support.data.map((ticket) => (
+                <div
+                  key={ticket.id}
+                  className="grid gap-4 p-5 lg:grid-cols-[170px_1fr_auto] lg:items-start"
+                >
+                  <div>
+                    <Badge
+                      tone={
+                        ticket.priority === "URGENT"
+                          ? "red"
+                          : ticket.priority === "HIGH"
+                            ? "amber"
+                            : "slate"
+                      }
+                    >
+                      {ticket.priority === "URGENT"
+                        ? "Urgente"
+                        : ticket.priority === "HIGH"
+                          ? "Alta"
+                          : "Normal"}
+                    </Badge>
+                    <p className="mt-2 font-bold">{ticket.tenantName}</p>
+                    <p className="break-all text-xs text-slate-500">
+                      {ticket.ownerEmail}
+                    </p>
+                  </div>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="font-semibold">{ticket.subject}</h3>
+                      <Badge
+                        tone={ticket.status === "RESOLVED" ? "green" : "slate"}
+                      >
+                        {ticket.status === "RESOLVED"
+                          ? "Resuelto"
+                          : ticket.status === "IN_PROGRESS"
+                            ? "En atención"
+                            : "Abierto"}
+                      </Badge>
+                    </div>
+                    <p className="mt-2 whitespace-pre-wrap text-sm text-slate-600">
+                      {ticket.description}
+                    </p>
+                    <p className="mt-2 text-xs text-slate-400">
+                      {new Date(ticket.createdAt).toLocaleString("es-PE")}
+                    </p>
+                    {ticket.adminResponse && (
+                      <p className="mt-3 rounded-xl bg-teal-50 p-3 text-sm text-teal-950">
+                        <strong>Respuesta:</strong> {ticket.adminResponse}
+                      </p>
+                    )}
+                  </div>
+                  <Button
+                    className="whitespace-nowrap"
+                    onClick={() => {
+                      setSelectedTicket(ticket);
+                      setSupportResponse(ticket.adminResponse ?? "");
+                      setResolved(ticket.status === "RESOLVED");
+                    }}
+                  >
+                    {ticket.adminResponse ? "Actualizar" : "Responder"}
+                  </Button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-5">
+              <Empty
+                title="Sin solicitudes"
+                description="Las consultas de las empresas aparecerán aquí según su prioridad."
+              />
+            </div>
+          )}
         </Card>
         <Card className="mt-7 overflow-hidden p-0">
           <div className="p-5">
@@ -246,6 +376,51 @@ export function PlatformDashboard() {
           )}
         </Card>
       </div>
+      {selectedTicket && (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-slate-950/60 p-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          <Card className="w-full max-w-xl">
+            <p className="text-xs font-bold uppercase tracking-wide text-teal-700">
+              {selectedTicket.tenantName}
+            </p>
+            <h2 className="mt-1 text-2xl font-semibold">
+              Responder: {selectedTicket.subject}
+            </h2>
+            <textarea
+              className="mt-5 min-h-40 w-full rounded-xl border border-slate-300 p-3.5 text-sm outline-none focus:border-teal-600 focus:ring-3 focus:ring-teal-100"
+              maxLength={4000}
+              value={supportResponse}
+              onChange={(event) => setSupportResponse(event.target.value)}
+              placeholder="Escribe una respuesta clara para la empresa…"
+            />
+            <label className="mt-4 flex items-center gap-2 text-sm font-semibold text-slate-700">
+              <input
+                type="checkbox"
+                checked={resolved}
+                onChange={(event) => setResolved(event.target.checked)}
+              />
+              Marcar la solicitud como resuelta
+            </label>
+            <div className="mt-5 flex justify-end gap-3">
+              <Button
+                className="bg-slate-200 text-slate-800 hover:bg-slate-300"
+                onClick={() => setSelectedTicket(undefined)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                disabled={respond.isPending || !supportResponse.trim()}
+                onClick={() => respond.mutate()}
+              >
+                {respond.isPending ? "Enviando…" : "Enviar respuesta"}
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
     </main>
   );
 }

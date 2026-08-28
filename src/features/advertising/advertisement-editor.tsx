@@ -34,7 +34,12 @@ const empty = {
 type AdForm = Omit<
   Advertisement,
   "id" | "advertiserName" | "imageUrl" | "logoUrl" | "coverUrl" | "htmlContent"
-> & { imageUrl: string; logoUrl: string; coverUrl: string; htmlContent: string };
+> & {
+  imageUrl: string;
+  logoUrl: string;
+  coverUrl: string;
+  htmlContent: string;
+};
 export function AdvertisementEditor() {
   const { session, tenantId } = useTenant();
   const key = ["tenant-advertisement", tenantId];
@@ -48,7 +53,7 @@ export function AdvertisementEditor() {
   if (session?.plan !== "PREMIUM")
     return (
       <Card className="max-w-2xl">
-        <Megaphone className="text-amber-600" />
+        <Megaphone className="text-teal-600" />
         <h2 className="mt-4 text-2xl font-semibold">
           Anuncios para negocios Premium
         </h2>

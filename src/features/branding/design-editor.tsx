@@ -22,8 +22,8 @@ type Form = Pick<
   | "buttonStyle"
 >;
 const defaults: Form = {
-  primaryColor: "#115e59",
-  accentColor: "#f59e0b",
+  primaryColor: "#134e4a",
+  accentColor: "#14b8a6",
   fontPreset: "CLASSIC",
   themePreset: "EDITORIAL",
   heroTitle: "",
@@ -112,10 +112,10 @@ function DesignForm({
               Personaliza sin comprometer la accesibilidad.
             </p>
           </div>
-          {!enabled && <LockKeyhole className="text-amber-600" />}
+          {!enabled && <LockKeyhole className="text-teal-600" />}
         </div>
         {!enabled && (
-          <div className="mt-5 rounded-xl bg-amber-50 p-4 text-sm text-amber-900">
+          <div className="mt-5 rounded-xl bg-teal-50 p-4 text-sm text-teal-900">
             <strong>Disponible desde Plus.</strong>
             <p className="mt-1">
               Tu página sigue activa con el diseño estándar.

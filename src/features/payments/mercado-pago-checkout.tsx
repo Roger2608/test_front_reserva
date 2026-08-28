@@ -226,7 +226,7 @@ export function MercadoPagoCheckout() {
                 token: data.token,
                 paymentMethodId: data.paymentMethodId,
                 issuerId: data.issuerId,
-              installments: Number(data.installments) || 1,
+                installments: Number(data.installments) || 1,
                 payer: {
                   email: data.cardholderEmail,
                   identification: {
@@ -256,7 +256,8 @@ export function MercadoPagoCheckout() {
 
   useEffect(() => {
     if (checkoutStatus !== "PENDING") return;
-    const select = document.querySelector<HTMLSelectElement>("#mp-installments");
+    const select =
+      document.querySelector<HTMLSelectElement>("#mp-installments");
     if (!select) return;
     const updateVisibility = () => {
       const supportsFinancing = Array.from(select.options).some(
@@ -314,7 +315,7 @@ export function MercadoPagoCheckout() {
   const closed =
     checkout.status === "FAILED" || checkout.status === "CANCELLED";
   return (
-    <main className="min-h-screen bg-[#f7f5ef] px-4 py-10">
+    <main className="min-h-screen bg-[#f4f7f6] px-4 py-10">
       <div className="mx-auto max-w-3xl">
         <div className="mb-6">
           <p className="text-sm font-bold uppercase tracking-widest text-teal-700">

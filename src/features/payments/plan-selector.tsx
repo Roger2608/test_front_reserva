@@ -151,7 +151,7 @@ export function PlanSelector() {
       ) : (
         <>
           {pending && (
-            <Card className="mb-6 flex flex-col items-start justify-between gap-4 border-amber-200 bg-amber-50 sm:flex-row sm:items-center">
+            <Card className="mb-6 flex flex-col items-start justify-between gap-4 border-teal-200 bg-teal-50 sm:flex-row sm:items-center">
               <div>
                 <Badge tone="amber">PAGO PENDIENTE</Badge>
                 <p className="mt-2 font-semibold text-slate-950">
@@ -264,7 +264,7 @@ export function PlanSelector() {
             <Card
               role="alertdialog"
               aria-labelledby="free-plan-title"
-              className="mt-6 max-w-2xl border-amber-300 bg-amber-50"
+              className="mt-6 max-w-2xl border-emerald-300 bg-teal-50"
             >
               <h2
                 id="free-plan-title"

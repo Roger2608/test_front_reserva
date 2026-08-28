@@ -82,7 +82,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
     onError: (error: Error) => toast.error(error.message),
   });
   return (
-    <main className="grid min-h-screen place-items-center bg-[#f7f5ef] p-4">
+    <main className="grid min-h-screen place-items-center bg-[#f4f7f6] p-4">
       <Card className="w-full max-w-lg p-7">
         <Link href="/" className="text-xl font-extrabold text-teal-950">
           turno<span className="text-teal-600">.</span>
@@ -148,6 +148,14 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
               {...form.register("password")}
             />
           </Field>
+          {mode === "login" && (
+            <Link
+              href="/olvide-contrasena"
+              className="-mt-2 text-right text-sm font-bold text-teal-700"
+            >
+              ¿Olvidaste tu contraseña?
+            </Link>
+          )}
           <Button disabled={mutation.isPending}>
             {mutation.isPending
               ? "Procesando…"

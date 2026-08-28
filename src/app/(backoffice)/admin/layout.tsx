@@ -6,6 +6,7 @@ import {
   CalendarDays,
   Clock3,
   LayoutDashboard,
+  LifeBuoy,
   LogOut,
   MapPin,
   Megaphone,
@@ -34,6 +35,7 @@ const links = [
   ["/admin/diseno", "Diseño", Palette],
   ["/admin/anuncios", "Anuncios", Megaphone],
   ["/admin/plan", "Mi plan", Sparkles],
+  ["/admin/soporte", "Soporte", LifeBuoy],
 ] as const;
 
 export default function AdminLayout({
