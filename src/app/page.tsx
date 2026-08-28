@@ -9,6 +9,9 @@ import {
   Palette,
   ShieldCheck,
   Sparkles,
+  HeartPulse,
+  Scissors,
+  Dumbbell,
 } from "lucide-react";
 
 export default function Home() {
@@ -56,7 +59,7 @@ export default function Home() {
           </Link>
         </nav>
       </header>
-      <section className="grid-paper relative border-y border-slate-900/5 bg-white/50 py-20 md:py-28">
+      <section className="hero-showcase grid-paper relative border-y border-slate-900/5 py-14 md:py-28">
         <div className="pointer-events-none absolute -right-32 -top-32 h-96 w-96 rounded-full bg-emerald-300/25 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-40 left-1/4 h-80 w-80 rounded-full bg-teal-200/20 blur-3xl" />
         <div className="shell relative grid items-center gap-12 lg:grid-cols-[1.15fr_.85fr]">
@@ -98,55 +101,69 @@ export default function Home() {
               ))}
             </div>
           </div>
-          <div className="relative mx-auto w-full max-w-md">
-            <div className="rounded-[2rem] bg-slate-950 p-2.5 shadow-2xl shadow-slate-950/20">
-              <div className="overflow-hidden rounded-[1.55rem] bg-white">
-                <div className="h-32 bg-gradient-to-br from-teal-950 via-teal-800 to-emerald-500 p-5 text-white">
-                  <div className="flex items-center justify-between">
-                    <span className="grid h-10 w-10 place-items-center rounded-full bg-white/15 text-sm font-bold backdrop-blur">
-                      EN
-                    </span>
-                    <span className="rounded-full bg-white/15 px-3 py-1 text-xs backdrop-blur">
-                      Mi página
-                    </span>
-                  </div>
-                  <p className="mt-5 text-xl font-semibold">Estudio Norte</p>
-                </div>
-                <div className="p-5">
-                  <p className="text-xs font-bold uppercase tracking-widest text-teal-700">
-                    Elige tu servicio
-                  </p>
-                  <div className="mt-4 space-y-2">
-                    {[
-                      ["Corte & estilo", "45 min"],
-                      ["Asesoría personalizada", "60 min"],
-                      ["Sesión express", "30 min"],
-                    ].map(([service, time], i) => (
-                      <div
-                        key={service}
-                        className={`flex items-center justify-between rounded-xl border p-3 ${i === 0 ? "border-teal-500 bg-teal-50" : "border-slate-200"}`}
-                      >
-                        <span className="font-semibold text-slate-900">
-                          {service}
-                        </span>
-                        <span className="text-xs text-slate-500">{time}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <button className="mt-4 flex min-h-11 w-full items-center justify-center gap-2 rounded-xl bg-slate-950 text-sm font-bold text-white">
-                    Reservar ahora <ArrowRight size={16} />
-                  </button>
-                </div>
-              </div>
-            </div>
-            <div className="absolute -bottom-5 -left-5 rounded-2xl border border-slate-200 bg-white p-3 shadow-xl">
+          <div
+            className="booking-deck relative mx-auto h-[390px] w-[72%] max-w-[280px] sm:h-[525px] sm:w-full sm:max-w-md"
+            aria-label="Ejemplos de páginas de reserva"
+          >
+            <BookingPreview
+              icon={<Scissors size={19} />}
+              initials="EN"
+              name="Estudio Norte"
+              category="Belleza"
+              header="from-teal-950 via-teal-800 to-emerald-500"
+              accent="border-teal-500 bg-teal-50"
+              button="bg-slate-950"
+              services={[
+                ["Corte & estilo", "45 min"],
+                ["Color personalizado", "90 min"],
+                ["Sesión express", "30 min"],
+              ]}
+            />
+            <BookingPreview
+              icon={<HeartPulse size={19} />}
+              initials="CS"
+              name="Clínica Serena"
+              category="Salud"
+              header="from-sky-950 via-cyan-800 to-teal-400"
+              accent="border-cyan-500 bg-cyan-50"
+              button="bg-cyan-950"
+              services={[
+                ["Consulta general", "40 min"],
+                ["Terapia física", "60 min"],
+                ["Control preventivo", "30 min"],
+              ]}
+            />
+            <BookingPreview
+              icon={<Dumbbell size={19} />}
+              initials="AM"
+              name="Arena Movimiento"
+              category="Bienestar"
+              header="from-violet-950 via-indigo-800 to-fuchsia-500"
+              accent="border-violet-500 bg-violet-50"
+              button="bg-violet-950"
+              services={[
+                ["Entrenamiento personal", "60 min"],
+                ["Evaluación inicial", "45 min"],
+                ["Movilidad guiada", "30 min"],
+              ]}
+            />
+            <div className="identity-chip absolute left-1/2 top-[340px] z-20 -translate-x-1/2 rounded-2xl border border-slate-200 bg-white/95 p-2.5 shadow-xl backdrop-blur sm:top-[460px] sm:p-3">
               <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
                 Tu identidad
               </p>
               <div className="mt-2 flex gap-2">
-                <span className="h-5 w-5 rounded-full bg-teal-900" />
-                <span className="h-5 w-5 rounded-full bg-emerald-500" />
-                <span className="h-5 w-5 rounded-full bg-slate-100" />
+                <span
+                  className="h-5 w-5 rounded-full bg-teal-700"
+                  title="Belleza"
+                />
+                <span
+                  className="h-5 w-5 rounded-full bg-cyan-500"
+                  title="Salud"
+                />
+                <span
+                  className="h-5 w-5 rounded-full bg-violet-500"
+                  title="Bienestar"
+                />
               </div>
             </div>
           </div>
@@ -278,6 +295,72 @@ export default function Home() {
         </div>
       </footer>
     </main>
+  );
+}
+
+function BookingPreview({
+  icon,
+  initials,
+  name,
+  category,
+  header,
+  accent,
+  button,
+  services,
+}: {
+  icon: React.ReactNode;
+  initials: string;
+  name: string;
+  category: string;
+  header: string;
+  accent: string;
+  button: string;
+  services: string[][];
+}) {
+  return (
+    <article className="booking-deck-card absolute inset-x-0 top-0 rounded-[1.6rem] bg-slate-950 p-2 shadow-2xl shadow-slate-950/20 sm:rounded-[2rem] sm:p-2.5">
+      <div className="overflow-hidden rounded-[1.2rem] bg-white sm:rounded-[1.55rem]">
+        <div
+          className={`h-24 bg-gradient-to-br p-3.5 text-white sm:h-32 sm:p-5 ${header}`}
+        >
+          <div className="flex items-center justify-between">
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-white/15 text-[11px] font-bold backdrop-blur sm:h-10 sm:w-10 sm:text-sm">
+              {initials}
+            </span>
+            <span className="flex items-center gap-1 rounded-full bg-white/15 px-2 py-1 text-[10px] backdrop-blur sm:gap-1.5 sm:px-3 sm:text-xs">
+              {icon}
+              {category}
+            </span>
+          </div>
+          <p className="mt-3 text-base font-semibold sm:mt-5 sm:text-xl">
+            {name}
+          </p>
+        </div>
+        <div className="p-3 sm:p-5">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-teal-700 sm:text-xs">
+            Elige tu servicio
+          </p>
+          <div className="mt-2.5 space-y-1.5 sm:mt-4 sm:space-y-2">
+            {services.map(([service, time], index) => (
+              <div
+                key={service}
+                className={`flex items-center justify-between rounded-lg border px-2.5 py-2 text-xs sm:rounded-xl sm:p-3 sm:text-base ${index === 0 ? accent : "border-slate-200"}`}
+              >
+                <span className="font-semibold text-slate-900">{service}</span>
+                <span className="text-[10px] text-slate-500 sm:text-xs">
+                  {time}
+                </span>
+              </div>
+            ))}
+          </div>
+          <div
+            className={`mt-2.5 flex min-h-9 w-full items-center justify-center gap-2 rounded-lg text-xs font-bold text-white sm:mt-4 sm:min-h-11 sm:rounded-xl sm:text-sm ${button}`}
+          >
+            Reservar ahora <ArrowRight size={16} />
+          </div>
+        </div>
+      </div>
+    </article>
   );
 }
 

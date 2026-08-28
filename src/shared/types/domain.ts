@@ -163,7 +163,7 @@ export type NotificationJob = Entity & {
   bookingId: string;
   type: "BOOKING_CONFIRMATION" | "BOOKING_REMINDER";
   scheduledAt: string;
-  status: "PENDING" | "SENT" | "FAILED";
+  status: "PENDING" | "PROCESSING" | "SENT" | "FAILED" | "SKIPPED";
   attempts: number;
   providerReference?: string;
   lastError?: string;
