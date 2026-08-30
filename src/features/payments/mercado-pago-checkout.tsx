@@ -42,6 +42,17 @@ type MercadoPagoWindow = typeof window & { MP_DEVICE_SESSION_ID?: string };
 const publicKey = process.env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY;
 const fieldClass =
   "min-h-11 w-full rounded-xl border border-slate-300 bg-white px-3.5 text-sm outline-none focus-within:border-teal-600 focus-within:ring-3 focus-within:ring-teal-100";
+const checkoutLog = (
+  level: "info" | "warn" | "error",
+  event: string,
+  details: Record<string, unknown> = {},
+) => {
+  console[level]("[checkout]", {
+    event,
+    timestamp: new Date().toISOString(),
+    ...details,
+  });
+};
 
 export function MercadoPagoCheckout() {
   const { session, ready, setAuth } = useTenant();
@@ -78,7 +89,10 @@ export function MercadoPagoCheckout() {
     let attempts = 0;
     const captureDeviceId = () => {
       const value = (window as MercadoPagoWindow).MP_DEVICE_SESSION_ID;
-      if (value) setDeviceId(value);
+      if (value) {
+        setDeviceId(value);
+        checkoutLog("info", "device_id.ready", { length: value.length });
+      }
       return Boolean(value);
     };
     if (captureDeviceId()) return;
@@ -98,7 +112,11 @@ export function MercadoPagoCheckout() {
 
     const interval = window.setInterval(() => {
       attempts += 1;
-      if (captureDeviceId() || attempts >= 50) window.clearInterval(interval);
+      if (captureDeviceId() || attempts >= 50) {
+        window.clearInterval(interval);
+        if (attempts >= 50)
+          checkoutLog("warn", "device_id.timeout", { attempts });
+      }
     }, 100);
     return () => window.clearInterval(interval);
   }, []);
@@ -153,6 +171,12 @@ export function MercadoPagoCheckout() {
   });
 
   const finish = async (result: DirectPaymentResult) => {
+    checkoutLog("info", "payment.result", {
+      checkoutId: result.checkout.id,
+      paymentId: result.paymentId,
+      status: result.status,
+      statusDetail: result.statusDetail,
+    });
     queryClient.setQueryData(["checkout", result.checkout.id], result.checkout);
     if (session) setAuth({ ...session, checkout: result.checkout });
     if (result.status === "approved") {
@@ -176,20 +200,37 @@ export function MercadoPagoCheckout() {
     if (!checkout) throw new Error("No existe un checkout pendiente");
     setPaymentError(undefined);
     setLoading(true);
+    const idempotencyKey = newIdempotencyKey();
+    const startedAt = performance.now();
+    const currentDeviceId =
+      deviceId ?? (window as MercadoPagoWindow).MP_DEVICE_SESSION_ID;
+    checkoutLog("info", "payment.request", {
+      checkoutId: checkout.id,
+      method: payload.paymentMethodId,
+      installments: payload.installments,
+      deviceIdPresent: Boolean(currentDeviceId),
+      idempotencyKey,
+      mobile: window.matchMedia("(max-width: 767px)").matches,
+    });
     try {
       const result = await api<DirectPaymentResult>(
         `/api/v1/payments/${checkout.id}/process`,
         {
           method: "POST",
-          idempotencyKey: newIdempotencyKey(),
+          idempotencyKey,
           body: JSON.stringify({
             ...payload,
-            deviceId:
-              deviceId ??
-              (window as MercadoPagoWindow).MP_DEVICE_SESSION_ID,
+            deviceId: currentDeviceId,
           }),
         },
       );
+      checkoutLog("info", "payment.response", {
+        checkoutId: checkout.id,
+        paymentId: result.paymentId,
+        status: result.status,
+        statusDetail: result.statusDetail,
+        elapsedMs: Math.round(performance.now() - startedAt),
+      });
       await finish(result);
     } catch (error) {
       const message =
@@ -197,6 +238,12 @@ export function MercadoPagoCheckout() {
           ? error.message
           : "No fue posible procesar el pago";
       setPaymentError(message);
+      checkoutLog("error", "payment.failed", {
+        checkoutId: checkout.id,
+        method: payload.paymentMethodId,
+        message,
+        elapsedMs: Math.round(performance.now() - startedAt),
+      });
       toast.error(message);
     } finally {
       setLoading(false);
@@ -265,13 +312,30 @@ export function MercadoPagoCheckout() {
           },
           callbacks: {
             onFormMounted: (error: unknown) => {
-              if (error)
+              if (error) {
+                checkoutLog("error", "card_form.mount_failed");
                 setSdkError("No se pudo iniciar el formulario de tarjeta");
+              } else {
+                checkoutLog("info", "card_form.ready", {
+                  checkoutId: checkout.id,
+                });
+              }
             },
             onSubmit: (event: Event) => {
               event.preventDefault();
               const data = cardRef.current?.getCardFormData();
-              if (!data) return;
+              if (!data) {
+                checkoutLog("warn", "card_form.missing_data", {
+                  checkoutId: checkout.id,
+                });
+                return;
+              }
+              checkoutLog("info", "card.tokenized", {
+                checkoutId: checkout.id,
+                paymentMethodId: data.paymentMethodId,
+                issuerIdPresent: Boolean(data.issuerId),
+                installments: Number(data.installments) || 1,
+              });
               void processPayment({
                 token: data.token,
                 paymentMethodId: data.paymentMethodId,
@@ -289,6 +353,10 @@ export function MercadoPagoCheckout() {
           },
         });
       } catch (error) {
+        checkoutLog("error", "sdk.load_failed", {
+          checkoutId: checkout.id,
+          message: error instanceof Error ? error.message : "unknown",
+        });
         if (!cancelled)
           setSdkError(
             error instanceof Error
