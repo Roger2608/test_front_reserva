@@ -62,6 +62,7 @@ export function MercadoPagoCheckout() {
   const [loading, setLoading] = useState(false);
   const [showInstallments, setShowInstallments] = useState(false);
   const [paymentError, setPaymentError] = useState<string>();
+  const [deviceId, setDeviceId] = useState<string>();
   const [sdkError, setSdkError] = useState<string | undefined>(() =>
     publicKey ? undefined : "Falta NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY",
   );
@@ -72,6 +73,35 @@ export function MercadoPagoCheckout() {
   const mpRef = useRef<MercadoPagoInstance | undefined>(undefined);
   const cardRef = useRef<CardForm | undefined>(undefined);
   const initializedCheckoutRef = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    let attempts = 0;
+    const captureDeviceId = () => {
+      const value = (window as MercadoPagoWindow).MP_DEVICE_SESSION_ID;
+      if (value) setDeviceId(value);
+      return Boolean(value);
+    };
+    if (captureDeviceId()) return;
+
+    let script = document.querySelector<HTMLScriptElement>(
+      'script[data-mercadopago-security="true"]',
+    );
+    if (!script) {
+      script = document.createElement("script");
+      script.src = "https://www.mercadopago.com/v2/security.js";
+      script.async = true;
+      script.dataset.mercadopagoSecurity = "true";
+      script.setAttribute("view", "checkout");
+      script.setAttribute("output", "MP_DEVICE_SESSION_ID");
+      document.head.appendChild(script);
+    }
+
+    const interval = window.setInterval(() => {
+      attempts += 1;
+      if (captureDeviceId() || attempts >= 50) window.clearInterval(interval);
+    }, 100);
+    return () => window.clearInterval(interval);
+  }, []);
 
   const refreshSession = async () => {
     const next = await api<Session>("/api/v1/auth/refresh", {
@@ -154,7 +184,9 @@ export function MercadoPagoCheckout() {
           idempotencyKey: newIdempotencyKey(),
           body: JSON.stringify({
             ...payload,
-            deviceId: (window as MercadoPagoWindow).MP_DEVICE_SESSION_ID,
+            deviceId:
+              deviceId ??
+              (window as MercadoPagoWindow).MP_DEVICE_SESSION_ID,
           }),
         },
       );
