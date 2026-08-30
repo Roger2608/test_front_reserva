@@ -8,6 +8,7 @@ import { api } from "@/shared/api/client";
 import { useTenant } from "@/shared/components/providers";
 import { Button, Card } from "@/shared/components/ui";
 import type { Checkout, Session } from "@/shared/types/domain";
+import { checkoutPath } from "@/features/payments/checkout-navigation";
 
 export function PaymentPending() {
   const { session, ready } = useTenant();
@@ -42,12 +43,13 @@ export function PaymentPending() {
             {session.checkout.currency} {session.checkout.amount}
           </strong>
         </div>
-        <a
-          href={session.checkout.checkoutUrl}
+        <button
+          type="button"
+          onClick={() => router.push(checkoutPath(session.checkout!))}
           className="mt-6 flex min-h-12 items-center justify-center rounded-xl bg-teal-700 px-5 font-bold text-white"
         >
           Pagar con tarjeta o Yape
-        </a>
+        </button>
         <p className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-500">
           <LockKeyhole size={14} />
           La aplicación nunca almacena los datos de tu tarjeta ni tu código

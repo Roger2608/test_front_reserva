@@ -10,7 +10,7 @@ import {
   type ReactNode,
 } from "react";
 import { Toaster } from "sonner";
-import { api, setAccessToken } from "@/shared/api/client";
+import { api, getStoredAccessToken, setAccessToken } from "@/shared/api/client";
 import type { Session } from "@/shared/types/domain";
 
 type TenantState = {
@@ -22,7 +22,6 @@ type TenantState = {
   logout: () => void;
 };
 const TenantContext = createContext<TenantState | null>(null);
-
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
     () =>
@@ -37,7 +36,22 @@ export function Providers({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (hydrationStarted.current) return;
     hydrationStarted.current = true;
-    queueMicrotask(() => {
+    queueMicrotask(async () => {
+      const storedToken = getStoredAccessToken();
+      if (storedToken) {
+        setAccessToken(storedToken);
+        try {
+          const current = await api<Session>("/api/v1/auth/me", {
+            noRefresh: true,
+          });
+          setSession({ ...current, accessToken: storedToken });
+          setTenantIdState(current.tenant?.id ?? "");
+          setReady(true);
+          return;
+        } catch {
+          setAccessToken();
+        }
+      }
       api<Session>("/api/v1/auth/refresh", { method: "POST", noRefresh: true })
         .then((value) => {
           setAccessToken(value.accessToken);

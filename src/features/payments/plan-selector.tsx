@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, ExternalLink, LockKeyhole, Sparkles } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { api } from "@/shared/api/client";
 import { useTenant } from "@/shared/components/providers";
@@ -14,6 +15,7 @@ import type {
   Session,
   Subscription,
 } from "@/shared/types/domain";
+import { checkoutPath } from "@/features/payments/checkout-navigation";
 
 const details: Record<
   Plan,
@@ -60,6 +62,7 @@ const order: Plan[] = ["FREE", "BASIC", "PLUS", "PREMIUM"];
 
 export function PlanSelector() {
   const { session, setAuth } = useTenant();
+  const router = useRouter();
   const queryClient = useQueryClient();
   const [confirmFree, setConfirmFree] = useState(false);
   const subscription = useQuery({
@@ -88,7 +91,7 @@ export function PlanSelector() {
       }),
     onSuccess: (next) => {
       if (session) setAuth({ ...session, checkout: next });
-      if (next.checkoutUrl) window.location.assign(next.checkoutUrl);
+      if (next.checkoutUrl) router.push(checkoutPath(next));
       else toast.error("El proveedor no devolvió una URL de pago");
     },
     onError: (error: Error) => toast.error(error.message),
@@ -163,9 +166,7 @@ export function PlanSelector() {
               </div>
               <div className="flex flex-wrap gap-2">
                 {pending.checkoutUrl && (
-                  <Button
-                    onClick={() => window.location.assign(pending.checkoutUrl!)}
-                  >
+                  <Button onClick={() => router.push(checkoutPath(pending))}>
                     Continuar pago <ExternalLink className="ml-2" size={16} />
                   </Button>
                 )}

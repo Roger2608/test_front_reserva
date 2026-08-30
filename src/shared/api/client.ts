@@ -1,9 +1,25 @@
 import type { ProblemDetails } from "@/shared/types/domain";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8080";
+const ACCESS_TOKEN_KEY = "turno_access_token";
 let accessToken: string | undefined;
+export const getStoredAccessToken = (): string | undefined => {
+  if (typeof window === "undefined") return undefined;
+  try {
+    return sessionStorage.getItem(ACCESS_TOKEN_KEY) ?? undefined;
+  } catch {
+    return undefined;
+  }
+};
 export const setAccessToken = (value?: string) => {
   accessToken = value;
+  if (typeof window === "undefined") return;
+  try {
+    if (value) sessionStorage.setItem(ACCESS_TOKEN_KEY, value);
+    else sessionStorage.removeItem(ACCESS_TOKEN_KEY);
+  } catch {
+    // Safari puede restringir sessionStorage; el token sigue disponible en memoria.
+  }
 };
 
 export class ApiError extends Error {

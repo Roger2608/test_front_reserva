@@ -14,6 +14,7 @@ import type {
   DirectPaymentResult,
   Session,
 } from "@/shared/types/domain";
+import { checkoutPath } from "@/features/payments/checkout-navigation";
 
 type CardFormData = {
   paymentMethodId: string;
@@ -90,9 +91,7 @@ export function MercadoPagoCheckout() {
     },
     onSuccess: (next) => {
       if (session) setAuth({ ...session, checkout: next });
-      window.location.assign(
-        next.checkoutUrl ?? `/pago/checkout?checkout=${next.id}`,
-      );
+      router.push(checkoutPath(next));
     },
     onError: (error: Error) => toast.error(error.message),
   });
