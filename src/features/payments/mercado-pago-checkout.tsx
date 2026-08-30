@@ -37,6 +37,7 @@ type MercadoPagoConstructor = new (
   publicKey: string,
   options?: { locale?: string },
 ) => MercadoPagoInstance;
+type MercadoPagoWindow = typeof window & { MP_DEVICE_SESSION_ID?: string };
 
 const publicKey = process.env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY;
 const fieldClass =
@@ -67,6 +68,7 @@ export function MercadoPagoCheckout() {
   const [phone, setPhone] = useState("");
   const [otp, setOtp] = useState("");
   const [yapeEmail, setYapeEmail] = useState(session?.email ?? "");
+  const effectiveYapeEmail = yapeEmail || session?.email || "";
   const mpRef = useRef<MercadoPagoInstance | undefined>(undefined);
   const cardRef = useRef<CardForm | undefined>(undefined);
   const initializedCheckoutRef = useRef<string | undefined>(undefined);
@@ -150,7 +152,10 @@ export function MercadoPagoCheckout() {
         {
           method: "POST",
           idempotencyKey: newIdempotencyKey(),
-          body: JSON.stringify(payload),
+          body: JSON.stringify({
+            ...payload,
+            deviceId: (window as MercadoPagoWindow).MP_DEVICE_SESSION_ID,
+          }),
         },
       );
       await finish(result);
@@ -305,7 +310,7 @@ export function MercadoPagoCheckout() {
         token,
         paymentMethodId: "yape",
         installments: 1,
-        payer: { email: yapeEmail },
+        payer: { email: effectiveYapeEmail },
       });
     } catch (error) {
       toast.error(
@@ -489,7 +494,7 @@ export function MercadoPagoCheckout() {
             </Field>
             <Field label="Correo">
               <Input
-                value={yapeEmail}
+                value={effectiveYapeEmail}
                 onChange={(e) => setYapeEmail(e.target.value)}
                 type="email"
                 autoComplete="email"
