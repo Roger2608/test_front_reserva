@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { CustomerBookingAdvertisement } from "@/features/advertising/advertisement-banner";
 import { api, qs } from "@/shared/api/client";
 import { Button, Card, Field, Input, Select } from "@/shared/components/ui";
+import { newIdempotencyKey } from "@/shared/lib/idempotency";
 import type {
   Booking,
   CreateBooking,
@@ -23,7 +24,7 @@ import type {
 export function BookingWizard({ slug }: { slug: string }) {
   const router = useRouter();
   const search = useSearchParams();
-  const idempotency = useRef(crypto.randomUUID());
+  const idempotency = useRef(newIdempotencyKey());
   const [step, setStep] = useState(1);
   const [data, setData] = useState({
     serviceId: search.get("serviceId") ?? "",

@@ -14,6 +14,7 @@ import {
   Select,
 } from "@/shared/components/ui";
 import { dateTime } from "@/shared/lib/utils";
+import { newIdempotencyKey } from "@/shared/lib/idempotency";
 import type {
   Booking,
   Location,
@@ -173,7 +174,7 @@ export function BookingCreator() {
       api<Booking>("/api/v1/bookings", {
         tenantId,
         method: "POST",
-        idempotencyKey: crypto.randomUUID(),
+        idempotencyKey: newIdempotencyKey(),
         body: JSON.stringify({
           locationId: form.locationId,
           serviceId: form.serviceId,

@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { api } from "@/shared/api/client";
 import { useTenant } from "@/shared/components/providers";
 import { Button, Card, Field, Input } from "@/shared/components/ui";
+import { newIdempotencyKey } from "@/shared/lib/idempotency";
 import type {
   Checkout,
   DirectPaymentResult,
@@ -68,6 +69,7 @@ export function MercadoPagoCheckout() {
   const [yapeEmail, setYapeEmail] = useState(session?.email ?? "");
   const mpRef = useRef<MercadoPagoInstance | undefined>(undefined);
   const cardRef = useRef<CardForm | undefined>(undefined);
+  const initializedCheckoutRef = useRef<string | undefined>(undefined);
 
   const refreshSession = async () => {
     const next = await api<Session>("/api/v1/auth/refresh", {
@@ -91,6 +93,13 @@ export function MercadoPagoCheckout() {
     },
     onSuccess: (next) => {
       if (session) setAuth({ ...session, checkout: next });
+      cardRef.current = undefined;
+      mpRef.current = undefined;
+      initializedCheckoutRef.current = undefined;
+      setPaymentError(undefined);
+      setSdkError(
+        publicKey ? undefined : "Falta NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY",
+      );
       router.push(checkoutPath(next));
     },
     onError: (error: Error) => toast.error(error.message),
@@ -140,7 +149,7 @@ export function MercadoPagoCheckout() {
         `/api/v1/payments/${checkout.id}/process`,
         {
           method: "POST",
-          idempotencyKey: crypto.randomUUID(),
+          idempotencyKey: newIdempotencyKey(),
           body: JSON.stringify(payload),
         },
       );
@@ -171,6 +180,11 @@ export function MercadoPagoCheckout() {
     }
     if (!checkout || checkoutStatus !== "PENDING") return;
     if (!publicKey) return;
+    if (initializedCheckoutRef.current !== checkout.id) {
+      cardRef.current = undefined;
+      mpRef.current = undefined;
+      initializedCheckoutRef.current = checkout.id;
+    }
     let cancelled = false;
     void (async () => {
       try {
