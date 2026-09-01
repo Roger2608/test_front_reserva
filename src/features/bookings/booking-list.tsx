@@ -30,7 +30,7 @@ const tone = (s: string) =>
         ? "red"
         : ("slate" as const);
 export function BookingList() {
-  const { tenantId } = useTenant();
+  const { tenantId, session } = useTenant();
   const qc = useQueryClient();
   const list = useQuery({
     queryKey: ["bookings", tenantId],
@@ -47,6 +47,15 @@ export function BookingList() {
       qc.invalidateQueries({ queryKey: ["bookings", tenantId] });
       toast.success("Estado actualizado");
     },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const reminder = useMutation({
+    mutationFn: (bookingId: string) =>
+      api(`/api/v1/tenant/notifications/reminders/${bookingId}`, {
+        tenantId,
+        method: "POST",
+      }),
+    onSuccess: () => toast.success("Recordatorio enviado por WhatsApp"),
     onError: (e: Error) => toast.error(e.message),
   });
   if (!tenantId)
@@ -125,6 +134,16 @@ export function BookingList() {
                       </Button>
                     </>
                   )}
+                  {session?.plan === "PREMIUM" &&
+                    (b.status === "PENDING" || b.status === "CONFIRMED") && (
+                      <Button
+                        className="min-h-9 bg-teal-50 px-3 py-1.5 text-xs text-teal-800 ring-1 ring-teal-200 hover:bg-teal-100"
+                        disabled={reminder.isPending}
+                        onClick={() => reminder.mutate(b.id)}
+                      >
+                        Recordar por WhatsApp
+                      </Button>
+                    )}
                 </td>
               </tr>
             ))}

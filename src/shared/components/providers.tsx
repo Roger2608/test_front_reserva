@@ -22,6 +22,27 @@ type TenantState = {
   logout: () => void;
 };
 const TenantContext = createContext<TenantState | null>(null);
+const SESSION_CACHE_KEY = "reservations.session";
+
+function readCachedSession() {
+  try {
+    const value = sessionStorage.getItem(SESSION_CACHE_KEY);
+    return value ? (JSON.parse(value) as Session) : null;
+  } catch {
+    return null;
+  }
+}
+
+function cacheSession(value?: Session) {
+  try {
+    if (value) sessionStorage.setItem(SESSION_CACHE_KEY, JSON.stringify(value));
+    else sessionStorage.removeItem(SESSION_CACHE_KEY);
+  } catch {}
+}
+
+export function hasCachedSession() {
+  return typeof window !== "undefined" && readCachedSession() !== null;
+}
 export function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(
     () =>
@@ -40,10 +61,21 @@ export function Providers({ children }: { children: ReactNode }) {
       const storedToken = getStoredAccessToken();
       if (storedToken) {
         setAccessToken(storedToken);
+        const cached = readCachedSession();
+        if (cached) {
+          setSession({ ...cached, accessToken: storedToken });
+          setTenantIdState(cached.tenant?.id ?? "");
+          setReady(true);
+          return;
+        }
         try {
-          const current = await api<Session>("/api/v1/auth/me", {
-            noRefresh: true,
-          });
+          const current = await api<Session>(
+            "/api/v1/auth/me?validateSubscription=true",
+            {
+              noRefresh: true,
+            },
+          );
+          cacheSession(current);
           setSession({ ...current, accessToken: storedToken });
           setTenantIdState(current.tenant?.id ?? "");
           setReady(true);
@@ -55,6 +87,7 @@ export function Providers({ children }: { children: ReactNode }) {
       api<Session>("/api/v1/auth/refresh", { method: "POST", noRefresh: true })
         .then((value) => {
           setAccessToken(value.accessToken);
+          cacheSession(value);
           setSession(value);
           setTenantIdState(value.tenant?.id ?? "");
         })
@@ -73,6 +106,7 @@ export function Providers({ children }: { children: ReactNode }) {
       setTenantId: (id: string) => setTenantIdState(id),
       setAuth: (next: Session) => {
         setAccessToken(next.accessToken);
+        cacheSession(next);
         setTenantIdState(next.tenant?.id ?? "");
         setSession(next);
         setReady(true);
@@ -82,6 +116,7 @@ export function Providers({ children }: { children: ReactNode }) {
           () => undefined,
         );
         setAccessToken();
+        cacheSession();
         setTenantIdState("");
         setSession(null);
       },

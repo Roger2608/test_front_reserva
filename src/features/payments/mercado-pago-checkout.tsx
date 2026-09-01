@@ -37,6 +37,11 @@ type MercadoPagoConstructor = new (
   publicKey: string,
   options?: { locale?: string },
 ) => MercadoPagoInstance;
+type AbortCheckoutResult = {
+  freePlanActivated: boolean;
+  paymentAlreadyApproved: boolean;
+  checkout: Checkout;
+};
 type MercadoPagoWindow = typeof window & { MP_DEVICE_SESSION_ID?: string };
 
 const publicKey = process.env.NEXT_PUBLIC_MERCADOPAGO_PUBLIC_KEY;
@@ -155,17 +160,27 @@ export function MercadoPagoCheckout() {
     onError: (error: Error) => toast.error(error.message),
   });
   const abandon = useMutation({
-    mutationFn: () =>
-      checkout
-        ? api<void>(`/api/v1/payments/${checkout.id}`, { method: "DELETE" })
-        : Promise.resolve(),
-    onSuccess: async () => {
-      await refreshSession();
-      await queryClient.invalidateQueries({ queryKey: ["subscription"] });
-      toast.success("Intento de pago cancelado");
-      router.replace(
-        session?.role === "PENDING_COMPANY" ? "/pago/pendiente" : "/admin/plan",
+    mutationFn: async () => {
+      if (!checkout) throw new Error("No existe un checkout para cancelar");
+      const wasRegistration = session?.role === "PENDING_COMPANY";
+      const result = await api<AbortCheckoutResult>(
+        `/api/v1/payments/${checkout.id}/abort`,
+        { method: "POST" },
       );
+      const next = await refreshSession();
+      await queryClient.invalidateQueries({ queryKey: ["subscription"] });
+      if (result.paymentAlreadyApproved) {
+        toast.success("El pago ya había sido aprobado y tu plan está activo");
+        router.replace("/admin/plan");
+        return result;
+      }
+      const message = wasRegistration
+        ? "Hemos tenido un problema al procesar el pago, pero descuida: hemos creado tu cuenta con un plan Free para que comiences a disfrutar del servicio. Pierde el cuidado, luego podrás actualizar tu plan."
+        : "Hemos tenido un problema al procesar el pago. Vuelve a intentarlo.";
+      setAuth(next);
+      toast.error(message, { duration: 12000 });
+      router.replace("/admin");
+      return result;
     },
     onError: (error: Error) => toast.error(error.message),
   });
@@ -191,9 +206,15 @@ export function MercadoPagoCheckout() {
       router.replace("/pago/resultado");
       return;
     }
-    const message = `Pago rechazado (${result.statusDetail || result.status}). No se realizó ningún cargo.`;
-    setPaymentError(message);
-    toast.error(message);
+    try {
+      await abandon.mutateAsync();
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "No pudimos cerrar el intento de pago";
+      setPaymentError(message);
+    }
   };
 
   const processPayment = async (payload: Record<string, unknown>) => {
@@ -244,7 +265,13 @@ export function MercadoPagoCheckout() {
         message,
         elapsedMs: Math.round(performance.now() - startedAt),
       });
-      toast.error(message);
+      try {
+        await abandon.mutateAsync();
+      } catch {
+        toast.error(
+          `${message}. No pudimos cerrar el intento automáticamente; usa “Salir y cancelar”.`,
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -448,6 +475,16 @@ export function MercadoPagoCheckout() {
               {checkout.currency} {checkout.amount}
             </strong>
           </p>
+          <Button
+            type="button"
+            className="mt-4 bg-white text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50"
+            disabled={loading || abandon.isPending}
+            onClick={() => abandon.mutate()}
+          >
+            {abandon.isPending
+              ? "Cancelando intento…"
+              : "Salir y cancelar intento"}
+          </Button>
         </div>
         {(paymentError || closed) && (
           <Card role="alert" className="mb-5 border-rose-200 bg-rose-50">
@@ -471,7 +508,7 @@ export function MercadoPagoCheckout() {
                   disabled={abandon.isPending}
                   onClick={() => abandon.mutate()}
                 >
-                  {abandon.isPending ? "Cancelando…" : "Cancelar y volver"}
+                  {abandon.isPending ? "Cancelando…" : "Salir y cancelar"}
                 </Button>
               )}
               <Button

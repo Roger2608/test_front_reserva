@@ -98,7 +98,7 @@ export function PlanSelector() {
   });
   const cancelCheckout = useMutation({
     mutationFn: (id: string) =>
-      api<void>(`/api/v1/payments/${id}`, { method: "DELETE" }),
+      api<void>(`/api/v1/payments/${id}/abort`, { method: "POST" }),
     onSuccess: async () => {
       await refresh();
       toast.success("Intento de pago cancelado. Ya puedes elegir otro plan");
@@ -116,6 +116,7 @@ export function PlanSelector() {
     onError: (error: Error) => toast.error(error.message),
   });
   const current = subscription.data?.plan ?? session?.plan;
+  const status = subscription.data?.status ?? session?.subscriptionStatus;
   const pending = subscription.data?.pendingCheckout;
   const owner = session?.role === "TENANT_OWNER";
   const priceFor = (plan: Plan) =>
@@ -141,8 +142,8 @@ export function PlanSelector() {
           Elige el plan de tu empresa
         </h1>
         <p className="mt-2 max-w-2xl text-slate-600">
-          Tu plan actual seguirá activo hasta que Mercado Pago confirme el nuevo
-          pago.
+          Tu plan actual seguirá activo hasta que Mercado Pago confirme el pago.
+          Las pruebas duran 15 días y no generan ningún cobro automático.
         </p>
       </div>
       {subscription.isLoading || prices.isLoading ? (
@@ -153,6 +154,26 @@ export function PlanSelector() {
         </Card>
       ) : (
         <>
+          {status === "TRIAL" && subscription.data?.trialEndsAt && (
+            <Card className="mb-6 border-teal-200 bg-teal-50">
+              <Badge tone="green">PRUEBA GRATUITA</Badge>
+              <p className="mt-2 font-semibold text-slate-950">
+                Estás probando {current} sin cobro hasta el {new Date(subscription.data.trialEndsAt).toLocaleDateString("es-PE")}.
+              </p>
+              <p className="mt-1 text-sm text-slate-600">
+                Puedes pagar ahora para conservarlo o elegir Free. Si no pagas,
+                tu cuenta seguirá activa y cambiará automáticamente a Free.
+              </p>
+            </Card>
+          )}
+          {status === "TRIAL_PAYMENT_REQUIRED" && (
+            <Card className="mb-6 border-amber-300 bg-amber-50">
+              <Badge tone="amber">DECISIÓN DE PLAN</Badge>
+              <p className="mt-2 font-semibold text-slate-950">
+                Tu prueba terminó. Paga para conservar {current} o continúa con Free.
+              </p>
+            </Card>
+          )}
           {pending && (
             <Card className="mb-6 flex flex-col items-start justify-between gap-4 border-teal-200 bg-teal-50 sm:flex-row sm:items-center">
               <div>
@@ -166,8 +187,19 @@ export function PlanSelector() {
               </div>
               <div className="flex flex-wrap gap-2">
                 {pending.checkoutUrl && (
-                  <Button onClick={() => router.push(checkoutPath(pending))}>
-                    Continuar pago <ExternalLink className="ml-2" size={16} />
+                  <Button
+                    onClick={() =>
+                      router.push(
+                        pending.paymentInProgress
+                          ? "/pago/resultado"
+                          : checkoutPath(pending),
+                      )
+                    }
+                  >
+                    {pending.paymentInProgress
+                      ? "Revisar pago"
+                      : "Continuar pago"}{" "}
+                    <ExternalLink className="ml-2" size={16} />
                   </Button>
                 )}
                 <Button
@@ -194,6 +226,13 @@ export function PlanSelector() {
           <div className="grid gap-5 lg:grid-cols-2 xl:grid-cols-4">
             {order.map((plan) => {
               const active = current === plan;
+              const canPayCurrent =
+                active &&
+                plan !== "FREE" &&
+                (status === "TRIAL" ||
+                  status === "TRIAL_PAYMENT_REQUIRED" ||
+                  (status === "ACTIVE" &&
+                    !!subscription.data?.renewalEligible));
               const isPending = pending?.plan === plan;
               return (
                 <Card
@@ -240,7 +279,7 @@ export function PlanSelector() {
                     className="w-full"
                     disabled={
                       !owner ||
-                      active ||
+                      (active && !canPayCurrent) ||
                       !!pending ||
                       checkout.isPending ||
                       downgrade.isPending
@@ -251,8 +290,10 @@ export function PlanSelector() {
                         : checkout.mutate(plan)
                     }
                   >
-                    {active
-                      ? "Plan actual"
+                    {canPayCurrent
+                      ? status === "ACTIVE" ? "Renovar plan" : "Conservar este plan"
+                      : active
+                        ? "Plan actual"
                       : isPending
                         ? "Pago pendiente"
                         : `Cambiar a ${details[plan].name}`}

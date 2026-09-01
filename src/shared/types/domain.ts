@@ -79,6 +79,7 @@ export type Checkout = {
   amount: number;
   currency: string;
   checkoutUrl?: string;
+  paymentInProgress?: boolean;
 };
 export type DirectPaymentResult = {
   paymentId: string;
@@ -96,7 +97,13 @@ export type Session = {
   tenant: Tenant | null;
   role: Role;
   plan: Plan;
-  subscriptionStatus: "ACTIVE" | "PENDING_PAYMENT" | "SUSPENDED" | "NONE";
+  subscriptionStatus:
+    | "TRIAL"
+    | "TRIAL_PAYMENT_REQUIRED"
+    | "ACTIVE"
+    | "PENDING_PAYMENT"
+    | "SUSPENDED"
+    | "NONE";
   canCustomizeDesign: boolean;
   checkout?: Checkout;
 };
@@ -110,6 +117,9 @@ export type Branding = Entity & {
   heroDescription?: string;
   logoUrl?: string;
   coverUrl?: string;
+  backgroundType: "COLOR" | "IMAGE";
+  backgroundColor: string;
+  backgroundImageUrl?: string;
   buttonStyle: "ROUNDED" | "PILL" | "SQUARE";
 };
 export type PlanCapabilities = {
@@ -129,6 +139,11 @@ export type Subscription = {
   premiumDesign: boolean;
   currentPeriodStart?: string;
   currentPeriodEnd?: string;
+  trialStartedAt?: string;
+  trialEndsAt?: string;
+  paymentDueAt?: string;
+  daysRemaining: number;
+  renewalEligible: boolean;
   pendingCheckout?: Checkout;
   capabilities: PlanCapabilities;
 };

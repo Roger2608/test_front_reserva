@@ -1,12 +1,35 @@
 "use client";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Ban, LogOut, Mail } from "lucide-react";
+import { Ban, CreditCard, LogOut, Mail } from "lucide-react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { api } from "@/shared/api/client";
 import { useTenant } from "@/shared/components/providers";
-import { Card } from "@/shared/components/ui";
+import { Button, Card, Select } from "@/shared/components/ui";
+import { checkoutPath } from "@/features/payments/checkout-navigation";
+import type { Checkout, Plan, PlanPrice } from "@/shared/types/domain";
+import { toast } from "sonner";
 export default function SuspendedAccountPage() {
   const { session, ready, logout } = useTenant();
   const router = useRouter();
+  const [selectedPlan, setSelectedPlan] = useState<Plan>();
+  const plan =
+    selectedPlan ??
+    (session?.plan && session.plan !== "FREE" ? session.plan : "BASIC");
+  const prices = useQuery({
+    queryKey: ["plan-prices"],
+    queryFn: () => api<PlanPrice[]>("/api/v1/payments/plans"),
+    enabled: !!session && session.subscriptionStatus === "SUSPENDED",
+  });
+  const checkout = useMutation({
+    mutationFn: () =>
+      api<Checkout>("/api/v1/payments/checkout", {
+        method: "POST",
+        body: JSON.stringify({ plan }),
+      }),
+    onSuccess: (value) => router.push(checkoutPath(value)),
+    onError: (error: Error) => toast.error(error.message),
+  });
   useEffect(() => {
     if (!ready) return;
     if (!session) router.replace("/login");
@@ -36,9 +59,34 @@ export default function SuspendedAccountPage() {
         </h1>
         <p className="mt-4 leading-7 text-slate-600">
           Tus datos permanecen guardados, pero no puedes administrar la empresa
-          ni recibir nuevas reservas hasta que el administrador de la plataforma
-          reactive la cuenta.
+          ni recibir nuevas reservas hasta regularizar la suscripción. Al
+          confirmarse el pago, la cuenta se reactivará automáticamente.
         </p>
+        <div className="mt-6 rounded-2xl border border-teal-200 bg-teal-50 p-5 text-left">
+          <strong className="text-slate-950">Reactiva tu negocio</strong>
+          <p className="mt-1 text-sm text-slate-600">
+            Elige un plan y completa el pago seguro.
+          </p>
+          <Select
+            className="mt-4"
+            value={plan}
+            onChange={(e) => setSelectedPlan(e.target.value as Plan)}
+          >
+            {prices.data?.filter((item) => item.plan !== "FREE").map((item) => (
+              <option key={item.plan} value={item.plan}>
+                {item.plan} · S/ {item.amount}
+              </option>
+            ))}
+          </Select>
+          <Button
+            className="mt-3 w-full"
+            disabled={checkout.isPending}
+            onClick={() => checkout.mutate()}
+          >
+            <CreditCard className="mr-2" size={17} />
+            {checkout.isPending ? "Preparando pago…" : "Pagar y reactivar"}
+          </Button>
+        </div>
         <div className="mt-6 rounded-xl bg-slate-50 p-4 text-sm text-slate-600">
           <Mail className="mx-auto mb-2 text-teal-700" />
           <strong className="block text-slate-900">¿Necesitas ayuda?</strong>

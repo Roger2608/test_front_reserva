@@ -6,8 +6,9 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
+import { Check, Clock3 } from "lucide-react";
 import { api } from "@/shared/api/client";
-import { useTenant } from "@/shared/components/providers";
+import { hasCachedSession, useTenant } from "@/shared/components/providers";
 import { Button, Card, Field, Input, Select } from "@/shared/components/ui";
 import type { Plan, Session } from "@/shared/types/domain";
 const loginSchema = z.object({
@@ -56,7 +57,7 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
         body: JSON.stringify(
           mode === "register"
             ? { ...values, timezone: "America/Lima", currency: "PEN" }
-            : values,
+            : { ...values, validateSubscription: !hasCachedSession() },
         ),
         noRefresh: true,
       }),
@@ -95,8 +96,38 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
         <p className="mt-2 text-sm leading-6 text-slate-500">
           {mode === "login"
             ? "Administra horarios, reservas y diseño."
-            : "Los planes pagados te llevarán a un checkout seguro."}
+            : "Elige cualquier plan y pruébalo 15 días sin cobro ni tarjeta."}
         </p>
+        {mode === "register" && (
+          <aside
+            role="note"
+            aria-label="Beneficio de prueba gratis"
+            className="mt-6 overflow-hidden rounded-2xl border border-teal-200 bg-teal-50/80"
+          >
+            <div className="flex gap-3 p-4">
+              <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-teal-950 text-emerald-200">
+                <Clock3 size={19} />
+              </span>
+              <div>
+                <p className="font-bold text-teal-950">
+                  Basic, Plus y Premium: 15 días gratis
+                </p>
+                <p className="mt-1 text-sm leading-6 text-slate-600">
+                  No pagas hoy ni necesitas tarjeta. Explora todas las funciones
+                  del plan elegido y decide al terminar tu prueba.
+                </p>
+                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs font-semibold text-teal-800">
+                  <span className="flex items-center gap-1">
+                    <Check size={14} /> Sin cobro inicial
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <Check size={14} /> Free siempre disponible
+                  </span>
+                </div>
+              </div>
+            </div>
+          </aside>
+        )}
         <form
           className="mt-7 grid gap-4"
           onSubmit={form.handleSubmit((value) => mutation.mutate(value))}

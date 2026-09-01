@@ -13,6 +13,7 @@ import {
   Scissors,
   Dumbbell,
 } from "lucide-react";
+import { TrialMarketingPopup } from "@/features/marketing/trial-marketing-popup";
 
 export default function Home() {
   const features = [
@@ -34,6 +35,7 @@ export default function Home() {
   ];
   return (
     <main className="min-h-screen overflow-hidden bg-[#f4f7f6]">
+      <TrialMarketingPopup />
       <header className="shell flex h-20 items-center justify-between">
         <Link
           href="/"

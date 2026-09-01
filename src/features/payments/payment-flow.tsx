@@ -1,5 +1,5 @@
 "use client";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CreditCard, LockKeyhole } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef } from "react";
@@ -45,10 +45,18 @@ export function PaymentPending() {
         </div>
         <button
           type="button"
-          onClick={() => router.push(checkoutPath(session.checkout!))}
+          onClick={() =>
+            router.push(
+              session.checkout!.paymentInProgress
+                ? "/pago/resultado"
+                : checkoutPath(session.checkout!),
+            )
+          }
           className="mt-6 flex min-h-12 items-center justify-center rounded-xl bg-teal-700 px-5 font-bold text-white"
         >
-          Pagar con tarjeta o Yape
+          {session.checkout.paymentInProgress
+            ? "Revisar pago pendiente"
+            : "Pagar con tarjeta o Yape"}
         </button>
         <p className="mt-4 flex items-center justify-center gap-2 text-xs text-slate-500">
           <LockKeyhole size={14} />
@@ -63,6 +71,7 @@ export function PaymentPending() {
 export function FakeCheckout() {
   const { session, setAuth } = useTenant();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const checkout = session?.checkout;
   const initialRegistration = session?.role === "PENDING_COMPANY";
   const approve = useMutation({
@@ -76,6 +85,7 @@ export function FakeCheckout() {
         noRefresh: true,
       });
       setAuth(refreshed);
+      await queryClient.invalidateQueries({ queryKey: ["subscription"] });
       toast.success("Pago de desarrollo aprobado");
       router.replace(initialRegistration ? "/admin" : "/admin/plan");
     },
@@ -124,9 +134,64 @@ export function PaymentResult() {
     queryKey: ["payment-status"],
     queryFn: () => api<Checkout>("/api/v1/payments/status"),
     enabled: ready && !!session,
-    refetchInterval: (query) =>
-      query.state.data?.status === "PAID" ? false : 2000,
     retry: 6,
+  });
+  const checkout = status.data ?? session?.checkout;
+  const refreshSession = async () => {
+    const next = await api<Session>("/api/v1/auth/refresh", {
+      method: "POST",
+      noRefresh: true,
+    });
+    setAuth(next);
+    return next;
+  };
+  const retryPayment = useMutation({
+    mutationFn: () => {
+      if (!checkout) throw new Error("No existe un pago para reintentar");
+      return api<Checkout>(`/api/v1/payments/${checkout.id}/retry`, {
+        method: "POST",
+      });
+    },
+    onSuccess: async (nextCheckout) => {
+      if (nextCheckout.status === "PAID") {
+        await refreshSession();
+        toast.success("El pago ya estaba aprobado y tu plan está activo");
+        router.replace("/admin/plan");
+        return;
+      }
+      if (session) setAuth({ ...session, checkout: nextCheckout });
+      toast.info("El intento anterior fue cancelado. Puedes pagar nuevamente");
+      window.location.assign(
+        nextCheckout.checkoutUrl ??
+          `/pago/checkout?checkout=${nextCheckout.id}`,
+      );
+    },
+    onError: (error: Error) => toast.error(error.message),
+  });
+  const cancelPayment = useMutation({
+    mutationFn: () => {
+      if (!checkout) throw new Error("No existe un pago para cancelar");
+      return api<{ paymentAlreadyApproved: boolean }>(
+        `/api/v1/payments/${checkout.id}/abort`,
+        { method: "POST" },
+      );
+    },
+    onSuccess: async (result) => {
+      const wasRegistration = session?.role === "PENDING_COMPANY";
+      await refreshSession();
+      if (result.paymentAlreadyApproved) {
+        toast.success("El pago ya estaba aprobado y tu plan está activo");
+        router.replace("/admin/plan");
+        return;
+      }
+      toast.info(
+        wasRegistration
+          ? "Cancelamos el pago pendiente y activamos tu cuenta con el plan Free"
+          : "Cancelamos el pago pendiente; conservas tu plan actual",
+      );
+      router.replace("/admin");
+    },
+    onError: (error: Error) => toast.error(error.message),
   });
   useEffect(() => {
     if (status.data?.status !== "PAID" || handled.current) return;
@@ -152,11 +217,15 @@ export function PaymentResult() {
         <h1 className="mt-3 text-4xl font-semibold">
           {status.data?.status === "PAID"
             ? "Pago confirmado"
-            : "Estamos verificando tu pago"}
+            : status.data?.status === "FAILED" ||
+                status.data?.status === "CANCELLED"
+              ? "El pago no se completó"
+              : "Tu pago sigue pendiente"}
         </h1>
         <p className="mt-3 text-slate-600">
-          La activación depende del webhook seguro. Esta pantalla se actualizará
-          automáticamente cuando llegue la confirmación.
+          {status.data?.status === "PAID"
+            ? "Mercado Pago confirmó la operación correctamente."
+            : "Mercado Pago nos notificará el resultado mediante webhook. Puedes actualizar la vista, cancelar el intento o generar uno nuevo sin duplicar el cobro."}
         </p>
         {status.isError && (
           <p className="mt-5 rounded-xl bg-teal-50 p-3 text-sm text-teal-800">
@@ -164,9 +233,30 @@ export function PaymentResult() {
             continuar revisando allí.
           </p>
         )}
-        <Button className="mt-6" onClick={() => router.replace("/admin/plan")}>
-          Volver a Mi plan
-        </Button>
+        {checkout?.status !== "PAID" && (
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
+            <Button
+              className="bg-white text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50"
+              disabled={status.isFetching}
+              onClick={() => void status.refetch()}
+            >
+              {status.isFetching ? "Actualizando…" : "Actualizar estado"}
+            </Button>
+            <Button
+              disabled={retryPayment.isPending || cancelPayment.isPending}
+              onClick={() => retryPayment.mutate()}
+            >
+              {retryPayment.isPending ? "Preparando…" : "Cancelar y reintentar"}
+            </Button>
+            <Button
+              className="bg-white text-slate-700 ring-1 ring-slate-300 hover:bg-slate-50"
+              disabled={retryPayment.isPending || cancelPayment.isPending}
+              onClick={() => cancelPayment.mutate()}
+            >
+              {cancelPayment.isPending ? "Cancelando…" : "Cancelar y Continuar"}
+            </Button>
+          </div>
+        )}
       </Card>
     </main>
   );

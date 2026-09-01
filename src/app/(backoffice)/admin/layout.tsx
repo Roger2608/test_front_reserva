@@ -23,6 +23,7 @@ import { cn } from "@/shared/lib/utils";
 import { useTenant } from "@/shared/components/providers";
 import { AdminTopAdvertisement } from "@/features/advertising/advertisement-banner";
 import { PlanWelcome } from "@/features/onboarding/plan-welcome";
+import { SubscriptionNotice } from "@/features/payments/subscription-notice";
 
 const links = [
   ["/admin", "Resumen", LayoutDashboard],
@@ -144,6 +145,7 @@ export default function AdminLayout({
         </header>
         <main className="mx-auto max-w-7xl p-4 md:p-8">
           <AdminTopAdvertisement />
+          <SubscriptionNotice />
           <PlanWelcome />
           {children}
         </main>

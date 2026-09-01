@@ -105,14 +105,18 @@ function Form({
   };
   const save = useMutation({
     mutationFn: async () => {
+      const {
+        logoUrl: ignoredLogoUrl,
+        coverUrl: ignoredCoverUrl,
+        imageUrl: ignoredImageUrl,
+        ...content
+      } = form;
+      void ignoredLogoUrl;
+      void ignoredCoverUrl;
+      void ignoredImageUrl;
       let value = await api<Advertisement>("/api/v1/tenant/advertisement", {
         method: "PUT",
-        body: JSON.stringify({
-          ...form,
-          logoUrl: form.logoUrl || null,
-          coverUrl: form.coverUrl || null,
-          imageUrl: form.imageUrl || null,
-        }),
+        body: JSON.stringify(content),
       });
       value = (await upload("logo", logo)) ?? value;
       value = (await upload("cover", cover)) ?? value;

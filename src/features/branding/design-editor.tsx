@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { LockKeyhole } from "lucide-react";
+import { ImageUp, LockKeyhole } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { api } from "@/shared/api/client";
@@ -19,6 +19,9 @@ type Form = Pick<
   | "heroDescription"
   | "logoUrl"
   | "coverUrl"
+  | "backgroundType"
+  | "backgroundColor"
+  | "backgroundImageUrl"
   | "buttonStyle"
 >;
 const defaults: Form = {
@@ -30,6 +33,9 @@ const defaults: Form = {
   heroDescription: "",
   logoUrl: "",
   coverUrl: "",
+  backgroundType: "COLOR",
+  backgroundColor: "#f4f7f6",
+  backgroundImageUrl: "",
   buttonStyle: "ROUNDED",
 };
 
@@ -93,6 +99,26 @@ function DesignForm({
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["branding", tenantId] });
       toast.success("Diseño publicado");
+    },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const uploadBackground = useMutation({
+    mutationFn: (file: File) => {
+      const body = new FormData();
+      body.append("image", file);
+      return api<Branding>("/api/v1/tenant/branding/background", {
+        method: "POST",
+        body,
+      });
+    },
+    onSuccess: (value) => {
+      setForm((current) => ({
+        ...current,
+        backgroundType: "IMAGE",
+        backgroundImageUrl: value.backgroundImageUrl,
+      }));
+      qc.invalidateQueries({ queryKey: ["branding", tenantId] });
+      toast.success("Fondo cargado en tu galería");
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -171,6 +197,47 @@ function DesignForm({
               onChange={(e) => set("coverUrl", e.target.value)}
             />
           </Field>
+          <Field label="Fondo de la página">
+            <Select
+              disabled={!enabled}
+              value={form.backgroundType}
+              onChange={(e) =>
+                set("backgroundType", e.target.value as Form["backgroundType"])
+              }
+            >
+              <option value="COLOR">Paleta de color</option>
+              <option value="IMAGE">Imagen</option>
+            </Select>
+          </Field>
+          {form.backgroundType === "COLOR" ? (
+            <Field label="Color de fondo">
+              <Input
+                disabled={!enabled}
+                type="color"
+                value={form.backgroundColor}
+                onChange={(e) => set("backgroundColor", e.target.value)}
+              />
+            </Field>
+          ) : (
+            <Field label="Imagen de fondo (JPG, PNG o WebP)">
+              <label className="flex cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-teal-300 bg-teal-50 px-4 py-4 text-sm font-bold text-teal-800">
+                <ImageUp size={18} />
+                {uploadBackground.isPending
+                  ? "Subiendo…"
+                  : "Seleccionar imagen"}
+                <input
+                  className="sr-only"
+                  disabled={!enabled || uploadBackground.isPending}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) uploadBackground.mutate(file);
+                  }}
+                />
+              </label>
+            </Field>
+          )}
           <Field label="Tipografía">
             <Select
               disabled={!enabled}
@@ -215,7 +282,16 @@ function DesignForm({
           </Button>
         </form>
       </Card>
-      <div className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white shadow-xl">
+      <div
+        className="overflow-hidden rounded-[2rem] border border-slate-200 bg-white bg-cover bg-center shadow-xl"
+        style={{
+          backgroundColor: form.backgroundColor,
+          backgroundImage:
+            form.backgroundType === "IMAGE" && form.backgroundImageUrl
+              ? `linear-gradient(#ffffffd9,#ffffffd9),url(${form.backgroundImageUrl})`
+              : undefined,
+        }}
+      >
         <div
           className="brand-typography min-h-72 p-8 text-white md:p-12"
           style={

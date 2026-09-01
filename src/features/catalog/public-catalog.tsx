@@ -45,12 +45,17 @@ export function PublicCatalog({ slug }: { slug: string }) {
         : "Georgia,serif";
   return (
     <main
-      className="brand-typography min-h-screen bg-[#f4f7f6]"
+      className="brand-typography min-h-screen bg-cover bg-fixed bg-center"
       style={
         {
           "--brand": branding?.primaryColor ?? "#134e4a",
           "--accent": branding?.accentColor ?? "#14b8a6",
           "--brand-font": font,
+          backgroundColor: branding?.backgroundColor ?? "#f4f7f6",
+          backgroundImage:
+            branding?.backgroundType === "IMAGE" && branding.backgroundImageUrl
+              ? `linear-gradient(#ffffffdf,#ffffffdf),url(${branding.backgroundImageUrl})`
+              : undefined,
         } as React.CSSProperties
       }
     >

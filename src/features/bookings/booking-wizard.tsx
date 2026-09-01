@@ -126,7 +126,17 @@ export function BookingWizard({ slug }: { slug: string }) {
         : data.name && data.phone;
   const whatsapp = site.data?.capabilities.canAutomateWhatsapp;
   return (
-    <main className="min-h-screen bg-[#f4f7f6] py-8">
+    <main
+      className="min-h-screen bg-cover bg-fixed bg-center py-8"
+      style={{
+        backgroundColor: site.data?.branding.backgroundColor ?? "#f4f7f6",
+        backgroundImage:
+          site.data?.branding.backgroundType === "IMAGE" &&
+          site.data.branding.backgroundImageUrl
+            ? `linear-gradient(#ffffffdf,#ffffffdf),url(${site.data.branding.backgroundImageUrl})`
+            : undefined,
+      }}
+    >
       <div className="mx-auto w-[min(760px,calc(100%-2rem))]">
         <button
           onClick={() =>
